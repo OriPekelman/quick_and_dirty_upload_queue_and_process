@@ -4,6 +4,7 @@ const fileUpload = require('express-fileupload');
 const app = express();
 const Queue = require('bee-queue');
 const jimpQueue = new Queue('jimpq');
+const fs = require('fs')
 
 const port = process.env.PORT || 8888;
 app.listen(port)
@@ -16,11 +17,19 @@ app.get('/', function(req, res) {
 // nothing guarantees we already have the image ...
 // so .. we can totally wait here until we get it.
 app.get('/output/:file', (req, res) => {
-  res.sendFile(path.join(__dirname,"output",req.params.file));
-});
 
-app.get('/', function(req, res) {
+  outFile= path.join(__dirname, "output",path.basename(req.params.file));
 
+  fs.access(outFile, fs.F_OK, (err) => {
+    if (err) {
+      console.error("Image does not exist yet");
+      console.error(err);
+      res.status(409).send('Image still processing.'); 
+      return
+    }
+    res.sendFile(outFile); 
+  })
+ 
 });
 
 app.post('/upload', function(req, res) {
@@ -42,7 +51,8 @@ app.post('/upload', function(req, res) {
         .retries(2)
         .save()
         .then((job) => {
-          res.redirect(301, '/output/'+fileUpload.name);     
+          console.log(`${job.id} is done`);
+          res.redirect(301, `output/${path.basename(job.data.path)}`);     
         });
   });
 });

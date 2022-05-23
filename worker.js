@@ -7,7 +7,7 @@ jimpQueue.process(function (job, done) {
   console.log(`Processing job ${job.id}`);
   Jimp.read(job.data.path, (err, img) => {
   if (err) throw err;
-  outFile= `output/${path.basename(job.data.path)}`;
+  outFile= path.join(__dirname, "output",path.basename(job.data.path));
   img
     .resize(256, 256) // resize
     .quality(60) // set JPEG quality
